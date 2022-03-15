@@ -1,29 +1,18 @@
 #!/bin/bash
-set -ex
+set -e
 
-# Load gcc
-GCC_VERSION=gcc-9.2.0
-set CC=/usr/bin/gcc
-set GCC=/usr/bin/gcc
+GCC_VERSION=$1
+HPCX_PATH=$2
 
+HCOLL_PATH=${HPCX_PATH}/hcoll
+UCX_PATH=${HPCX_PATH}/ucx
 INSTALL_PREFIX=/opt
 
-# HPC-X v2.9.0
-HPCX_VERSION="v2.11"
-TARBALL="hpcx-${HPCX_VERSION}-gcc-MLNX_OFED_LINUX-5-ubuntu18.04-cuda11-gdrcopy2-nccl2.11-x86_64.tbz"
-HPCX_DOWNLOAD_URL=https://azhpcstor.blob.core.windows.net/azhpc-images-store/${TARBALL}
-HPCX_FOLDER=$(basename ${HPCX_DOWNLOAD_URL} .tbz)
-
-$COMMON_DIR/download_and_verify.sh $HPCX_DOWNLOAD_URL "eb9837f4ee284f335c67cbe6e7508018346db3a93548c563846c8e21e4a61341"
-tar -xvf ${TARBALL}
-mv ${HPCX_FOLDER} ${INSTALL_PREFIX}
-HPCX_PATH=${INSTALL_PREFIX}/${HPCX_FOLDER}
-$COMMON_DIR/write_component_version.sh "HPCX" ${HPCX_VERSION}
-
-# Enable Sharpd
-${HPCX_PATH}/sharp/sbin/sharp_daemons_setup.sh -s -d sharp_am
-systemctl enable sharp_am
-systemctl start sharp_am
+# Load gcc
+export PATH=/opt/${GCC_VERSION}/bin:$PATH
+export LD_LIBRARY_PATH=/opt/${GCC_VERSION}/lib64:$LD_LIBRARY_PATH
+set CC=/opt/${GCC_VERSION}/bin/gcc
+set GCC=/opt/${GCC_VERSION}/bin/gcc
 
 # MVAPICH2 2.3.7
 MV2_VERSION="2.3.7"
@@ -34,6 +23,7 @@ cd mvapich2-${MV2_VERSION}
 ./configure --prefix=${INSTALL_PREFIX}/mvapich2-${MV2_VERSION} --enable-g=none --enable-fast=yes && make -j$(nproc) && make install
 cd ..
 $COMMON_DIR/write_component_version.sh "MVAPICH2" ${MV2_VERSION}
+
 
 # OpenMPI 4.1.1
 OMPI_VERSION="4.1.1"
@@ -53,27 +43,17 @@ bash l_mpi_oneapi_p_2021.4.0.441_offline.sh -s -a -s --eula accept
 mv ${INSTALL_PREFIX}/intel/oneapi/mpi/${IMPI_2021_VERSION}/modulefiles/mpi ${INSTALL_PREFIX}/intel/oneapi/mpi/${IMPI_2021_VERSION}/modulefiles/impi
 $COMMON_DIR/write_component_version.sh "IMPI_2021" ${IMPI_2021_VERSION}
 
-# Module Files
-MODULE_FILES_DIRECTORY=/usr/share/modules/modulefiles/mpi
-mkdir -p ${MODULE_FILES_DIRECTORY}
-
-# HPC-X
-cat << EOF >> ${MODULE_FILES_DIRECTORY}/hpcx-${HPCX_VERSION}
-#%Module 1.0
-#
-#  HPCx ${HPCX_VERSION}
-#
-conflict        mpi
-module load ${HPCX_PATH}/modulefiles/hpcx
-EOF
+# Setup module files for MPIs
+mkdir -p /usr/share/Modules/modulefiles/mpi/
 
 # MVAPICH2
-cat << EOF >> ${MODULE_FILES_DIRECTORY}/mvapich2-${MV2_VERSION}
+cat << EOF >> /usr/share/Modules/modulefiles/mpi/mvapich2-${MV2_VERSION}
 #%Module 1.0
 #
 #  MVAPICH2 ${MV2_VERSION}
 #
 conflict        mpi
+module load ${GCC_VERSION}
 prepend-path    PATH            /opt/mvapich2-${MV2_VERSION}/bin
 prepend-path    LD_LIBRARY_PATH /opt/mvapich2-${MV2_VERSION}/lib
 prepend-path    MANPATH         /opt/mvapich2-${MV2_VERSION}/share/man
@@ -85,12 +65,13 @@ setenv          MPI_HOME        /opt/mvapich2-${MV2_VERSION}
 EOF
 
 # OpenMPI
-cat << EOF >> ${MODULE_FILES_DIRECTORY}/openmpi-${OMPI_VERSION}
+cat << EOF >> /usr/share/Modules/modulefiles/mpi/openmpi-${OMPI_VERSION}
 #%Module 1.0
 #
 #  OpenMPI ${OMPI_VERSION}
 #
 conflict        mpi
+module load ${GCC_VERSION}
 prepend-path    PATH            /opt/openmpi-${OMPI_VERSION}/bin
 prepend-path    LD_LIBRARY_PATH /opt/openmpi-${OMPI_VERSION}/lib
 prepend-path    MANPATH         /opt/openmpi-${OMPI_VERSION}/share/man
@@ -101,8 +82,8 @@ setenv          MPI_MAN         /opt/openmpi-${OMPI_VERSION}/share/man
 setenv          MPI_HOME        /opt/openmpi-${OMPI_VERSION}
 EOF
 
-# Intel 2021
-cat << EOF >> ${MODULE_FILES_DIRECTORY}/impi_${IMPI_2021_VERSION}
+#IntelMPI-v2021
+cat << EOF >> /usr/share/Modules/modulefiles/mpi/impi_${IMPI_2021_VERSION}
 #%Module 1.0
 #
 #  Intel MPI ${IMPI_2021_VERSION}
@@ -116,8 +97,7 @@ setenv          MPI_MAN         /opt/intel/oneapi/mpi/${IMPI_2021_VERSION}/man
 setenv          MPI_HOME        /opt/intel/oneapi/mpi/${IMPI_2021_VERSION}
 EOF
 
-# Softlinks
-ln -s ${MODULE_FILES_DIRECTORY}/hpcx-${HPCX_VERSION} ${MODULE_FILES_DIRECTORY}/hpcx
-ln -s ${MODULE_FILES_DIRECTORY}/mvapich2-${MV2_VERSION} ${MODULE_FILES_DIRECTORY}/mvapich2
-ln -s ${MODULE_FILES_DIRECTORY}/openmpi-${OMPI_VERSION} ${MODULE_FILES_DIRECTORY}/openmpi
-ln -s ${MODULE_FILES_DIRECTORY}/impi_${IMPI_2021_VERSION} ${MODULE_FILES_DIRECTORY}/impi-2021
+# Create symlinks for modulefiles
+ln -s /usr/share/Modules/modulefiles/mpi/mvapich2-${MV2_VERSION} /usr/share/Modules/modulefiles/mpi/mvapich2
+ln -s /usr/share/Modules/modulefiles/mpi/openmpi-${OMPI_VERSION} /usr/share/Modules/modulefiles/mpi/openmpi
+ln -s /usr/share/Modules/modulefiles/mpi/impi_${IMPI_2021_VERSION} /usr/share/Modules/modulefiles/mpi/impi-2021

@@ -28,7 +28,6 @@ cd ..
 # install gcc 9.2
 GCC_VERSION="9.2.0"
 GCC_DOWNLOAD_URL=https://azhpcstor.blob.core.windows.net/azhpc-images-store/gcc-${GCC_VERSION}.tar.gz
-$COMMON_DIR/write_component_version.sh "GCC" ${GCC_VERSION}
 $COMMON_DIR/download_and_verify.sh $GCC_DOWNLOAD_URL "a931a750d6feadacbeecb321d73925cd5ebb6dfa7eff0802984af3aef63759f4"
 tar -xvf gcc-${GCC_VERSION}.tar.gz
 cd gcc-${GCC_VERSION}
@@ -46,4 +45,8 @@ prepend-path    LD_LIBRARY_PATH /opt/gcc-${GCC_VERSION}/lib64
 setenv          CC              /opt/gcc-${GCC_VERSION}/bin/gcc
 setenv          GCC             /opt/gcc-${GCC_VERSION}/bin/gcc
 EOF
+$COMMON_DIR/write_component_version.sh "GCC" ${GCC_VERSION}
 
+# cleanup downloaded files
+rm -rf *.bz2 *.tar.gz
+rm -rf -- */

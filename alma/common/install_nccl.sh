@@ -2,7 +2,7 @@
 set -ex
 
 # Install NCCL
-apt install -y build-essential devscripts debhelper fakeroot
+yum install -y rpm-build rpmdevtools
 NCCL_VERSION="2.12.7-1"
 TARBALL="v${NCCL_VERSION}.tar.gz"
 NCCL_DOWNLOAD_URL=https://github.com/NVIDIA/nccl/archive/refs/tags/${TARBALL}
@@ -12,18 +12,17 @@ tar -xvf ${TARBALL}
 
 pushd nccl-${NCCL_VERSION}
 make -j src.build
-make pkg.debian.build
-pushd build/pkg/deb/
-dpkg -i libnccl2_${NCCL_VERSION}+cuda11.6_amd64.deb
-sudo apt-mark hold libnccl2
-dpkg -i libnccl-dev_${NCCL_VERSION}+cuda11.6_amd64.deb
-sudo apt-mark hold libnccl-dev
-popd
+make pkg.redhat.build
+rpm -i ./build/pkg/rpm/x86_64/libnccl-${NCCL_VERSION}+cuda11.6.x86_64.rpm
+echo "exclude=libnccl" | tee -a /etc/yum.conf
+rpm -i ./build/pkg/rpm/x86_64/libnccl-devel-${NCCL_VERSION}+cuda11.6.x86_64.rpm
+echo "exclude=libnccl-devel" | tee -a /etc/yum.conf
+rpm -i ./build/pkg/rpm/x86_64/libnccl-static-${NCCL_VERSION}+cuda11.6.x86_64.rpm
+echo "exclude=libnccl-static" | tee -a /etc/yum.conf
 popd
 
 # Install the nccl rdma sharp plugin
 mkdir -p /usr/local/nccl-rdma-sharp-plugins
-apt install -y zlib1g-dev
 git clone https://github.com/Mellanox/nccl-rdma-sharp-plugins.git
 pushd nccl-rdma-sharp-plugins
 ./autogen.sh
@@ -42,15 +41,6 @@ make MPI=1 MPI_HOME=${HPCX_MPI_DIR} CUDA_HOME=/usr/local/cuda
 popd
 mv nccl-tests /opt/.
 module unload mpi/hpcx
-
-# NCCL-Tests Preset Run Config
-cat << EOF >> /etc/nccl.conf
-NCCL_IB_PCI_RELAXED_ORDERING=1
-CUDA_DEVICE_ORDER=PCI_BUS_ID
-NCCL_TOPO_FILE=/opt/microsoft/ndv4-topo.xml
-NCCL_SOCKET_IFNAME=eth0
-EOF
-
 $COMMON_DIR/write_component_version.sh "NCCL" ${NCCL_VERSION}
 
 # Remove installation files

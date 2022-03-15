@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # transform long form MOFED-LTS flag to short
 for arg in "$@"; do
@@ -8,10 +7,10 @@ for arg in "$@"; do
         *) set -- "$@" "$arg"
     esac
 done
-
+ 
 # display the usage of lts flag for user
 usage() { echo "Usage: $0 [--mofed-lts <true|false>]"  1>&2; exit 1; }
-
+ 
 while getopts ":l:" o; do
     case "${o}" in
         l)
@@ -24,38 +23,39 @@ while getopts ":l:" o; do
     esac
 done
 shift $((OPTIND-1))
-
+ 
 if [ -z "${l}" ]; then
     usage
 fi
-
+ 
 MOFED_LTS=${l} # true/ false
-
+ 
 source /etc/profile
-
+ 
 GCC_VERSION="9.2.0"
 MKL_VERSION="2021.1.1"
-
+ 
 if [ "${MOFED_LTS}" = true ]
 then
     HPCX_VERSION="v2.7.0"
     UBUNTU_MOFED_VERSION="MLNX_OFED_LINUX-4.9-3.1.5.0"
     HPCX_MOFED_INTEGRATION_VERSION="MLNX_OFED_LINUX-4.7-1.0.0.1"
 else
-    HPCX_VERSION="v2.9.0"
-    UBUNTU_MOFED_VERSION="MLNX_OFED_LINUX-5.4-3.0.0.0"
-    HPCX_MOFED_INTEGRATION_VERSION="MLNX_OFED_LINUX-5.4-1.0.3.0"
+    HPCX_VERSION="v2.11"
+    UBUNTU_MOFED_VERSION="MLNX_OFED_LINUX-5.6-1.0.3.3"
+    HPCX_MOFED_INTEGRATION_VERSION="MLNX_OFED_LINUX-5.6-1.0.3.3"
 fi
-
-MVAPICH2_VERSION="2.3.6"
+ 
+MVAPICH2_VERSION="2.3.7"
 OMPI_VERSION="4.1.1"
 IMPI_2021_VERSION="2021.4.0"
 MVAPICH2X_INSTALLATION_DIRECTORY="/opt/mvapich2-x"
 IMPI2018_PATH="/opt/intel/compilers_and_libraries_2018.5.274"
-
+ 
 CENTOS_MOFED_VERSION="MLNX_OFED_LINUX-5.4-1.0.3.0"
 CENTOS_MOFED_VERSION_79="MLNX_OFED_LINUX-5.4-3.0.0.0"
 CENTOS_MOFED_VERSION_83="MLNX_OFED_LINUX-5.2-1.0.4.0"
+ALMA_MOFED_VERSION_85="MLNX_OFED_LINUX-5.6-1.0.3.3"
 HPCX_OMB_PATH_CENTOS_76="/opt/hpcx-${HPCX_VERSION}-gcc${GCC_VERSION}-${CENTOS_MOFED_VERSION}-redhat7.6-x86_64/ompi/tests/osu-micro-benchmarks-5.6.2"
 HPCX_OMB_PATH_CENTOS_77="/opt/hpcx-${HPCX_VERSION}-gcc${GCC_VERSION}-${CENTOS_MOFED_VERSION}-redhat7.7-x86_64/ompi/tests/osu-micro-benchmarks-5.6.2"
 HPCX_OMB_PATH_CENTOS_78="/opt/hpcx-${HPCX_VERSION}-gcc${GCC_VERSION}-${CENTOS_MOFED_VERSION}-redhat7.8-x86_64/ompi/tests/osu-micro-benchmarks-5.6.2"
@@ -67,7 +67,7 @@ CENTOS_IMPI2021_PATH="/opt/intel/oneapi/mpi/${IMPI_2021_VERSION}"
 CENTOS_MVAPICH2_PATH="/opt/mvapich2-${MVAPICH2_VERSION}"
 CENTOS_MVAPICH2X_PATH="${MVAPICH2X_INSTALLATION_DIRECTORY}/gnu9.2.0/mofed5.1/azure-xpmem/mpirun"
 CENTOS_OPENMPI_PATH="/opt/openmpi-${OMPI_VERSION}"
-
+ 
 UBUNTU_MODULE_FILES_ROOT="/usr/share/modules/modulefiles"
 HPCX_OMB_PATH_UBUNTU_1804="/opt/hpcx-${HPCX_VERSION}-gcc-${HPCX_MOFED_INTEGRATION_VERSION}-ubuntu18.04-x86_64/ompi/tests/osu-micro-benchmarks-5.6.2"
 HPCX_OMB_PATH_UBUNTU_2004="/opt/hpcx-${HPCX_VERSION}-gcc-${HPCX_MOFED_INTEGRATION_VERSION}-ubuntu20.04-x86_64/ompi/tests/osu-micro-benchmarks-5.6.2"
@@ -75,7 +75,13 @@ UBUNTU_IMPI2021_PATH="/opt/intel/oneapi/mpi/${IMPI_2021_VERSION}"
 UBUNTU_MVAPICH2_PATH="/opt/mvapich2-${MVAPICH2_VERSION}"
 UBUNTU_MVAPICH2X_PATH="${MVAPICH2X_INSTALLATION_DIRECTORY}/gnu9.2.0/mofed5.0/advanced-xpmem/mpirun"
 UBUNTU_OPENMPI_PATH="/opt/openmpi-${OMPI_VERSION}"
-
+ 
+HPCX_OMB_PATH_ALMA_85="/opt/hpcx-v2.11-gcc-MLNX_OFED_LINUX-5-redhat8-cuda11-gdrcopy2-nccl2.11-x86_64/ompi/tests/osu-micro-benchmarks-5.8"
+ALMA_MODULE_FILES_ROOT="/usr/share/Modules/modulefiles"
+ALMA_IMPI2021_PATH="/opt/intel/oneapi/mpi/${IMPI_2021_VERSION}"
+ALMA_MVAPICH2_PATH="/opt/mvapich2-${MVAPICH2_VERSION}"
+ALMA_OPENMPI_PATH="/opt/openmpi-${OMPI_VERSION}"
+ 
 CHECK_HPCX=0
 CHECK_IMPI_2021=0
 CHECK_IMPI_2018=0
@@ -87,7 +93,7 @@ CHECK_AOCL=1
 CHECK_NV_PMEM=0
 CHECK_NCCL=0
 CHECK_GCC=1
-
+ 
 # Find distro
 find_distro() {
     local os=`cat /etc/os-release | awk 'match($0, /^NAME="(.*)"/, result) { print result[1] }'`
@@ -99,25 +105,34 @@ find_distro() {
     then
         local ubuntu_distro=`find_ubuntu_distro`
         echo "${os} ${ubuntu_distro}"
+    elif [[ $os == "AlmaLinux" ]]
+    then
+        local alma_distro=`find_alma_distro`
+        echo "${os} ${alma_distro}"
     else
         echo "*** Error - invalid distro!"
         exit -1
     fi
 }
-
+ 
 # Find CentOS distro
 find_centos_distro() {
     echo `cat /etc/redhat-release | awk '{print $4}'`
 }
-
+ 
 # Find Ubuntu distro
 find_ubuntu_distro() {
     echo `cat /etc/os-release | awk 'match($0, /^PRETTY_NAME="(.*)"/, result) { print result[1] }' | awk '{print $2}' | cut -d. -f1,2`
 }
-
+ 
+# Find Alma distro
+find_alma_distro() {
+    echo `cat /etc/redhat-release | awk '{print $3}'`
+}
+ 
 distro=`find_distro`
 echo "Detected distro: ${distro}"
-
+ 
 if [[ $distro == "CentOS Linux 7.6.1810" ]]
 then
     HPCX_OMB_PATH=${HPCX_OMB_PATH_CENTOS_76}
@@ -209,6 +224,23 @@ then
     MVAPICH2_PATH=${CENTOS_MVAPICH2_PATH}
     MVAPICH2X_PATH=${CENTOS_MVAPICH2X_PATH}
     OPENMPI_PATH=${CENTOS_OPENMPI_PATH}
+elif [[ $distro == "AlmaLinux 8.5" ]]
+then
+    HPCX_OMB_PATH=${HPCX_OMB_PATH_ALMA_85}
+    CHECK_HPCX=1
+    CHECK_IMPI_2021=1
+    CHECK_IMPI_2018=0
+    CHECK_OMPI=1
+    CHECK_MVAPICH2=1
+    CHECK_MVAPICH2X=0
+    MODULE_FILES_ROOT=${ALMA_MODULE_FILES_ROOT}
+    MOFED_VERSION=${ALMA_MOFED_VERSION_85}
+    IMPI2021_PATH=${ALMA_IMPI2021_PATH}
+    MVAPICH2_PATH=${ALMA_MVAPICH2_PATH}
+    OPENMPI_PATH=${ALMA_OPENMPI_PATH}
+    CHECK_AOCL=1
+    CHECK_NV_PMEM=1
+    CHECK_NCCL=1
 elif [[ $distro == "Ubuntu 18.04" ]]
 then
     HPCX_OMB_PATH=${HPCX_OMB_PATH_UBUNTU_1804}
@@ -227,9 +259,9 @@ then
     CHECK_GCC=0
     CHECK_NCCL=1
     if [ "${MOFED_LTS}" = true ]
-    then 
+    then
         CHECK_NV_PMEM=0
-    else 
+    else
         CHECK_NV_PMEM=1
     fi
 elif [[ $distro == "Ubuntu 20.04" ]]
@@ -254,9 +286,9 @@ else
     echo "*** Error - invalid distro!"
     exit -1
 fi
-
+ 
 module use ${MODULE_FILES_ROOT}
-
+ 
 # check file is present
 check_exists() {
     ls $1
@@ -268,7 +300,7 @@ check_exists() {
         exit -1
     fi
 }
-
+ 
 # check exit code
 check_exit_code() {
     if [ $? -eq 0 ]
@@ -279,133 +311,128 @@ check_exit_code() {
         exit -1
     fi
 }
-
+ 
 # verify MOFED installation
 ofed_info | grep ${MOFED_VERSION}
 check_exit_code "MOFED installed" "MOFED not installed"
-
+ 
 # verify IB device is listed
 lspci | grep "Infiniband controller\|Network controller"
 check_exit_code "IB device is listed" "IB device not found"
-
+ 
 # verify IB device is up
 ibstat | grep "LinkUp"
 check_exit_code "IB device state: LinkUp" "IB link not up"
-
+ 
 # verify GCC modulefile
 if [ $CHECK_GCC -eq 1 ]
 then
     # Not using gcc 9.2.0 in Ubuntu 20.04 (9.3.0 used)
     check_exists "${MODULE_FILES_ROOT}/gcc-${GCC_VERSION}"
-fi
-
-# verify s/w package installations
-if [ $CHECK_GCC -eq 1 ]
-then
-    # Not using gcc 9.2.0 in Ubuntu 20.04 (9.3.0 used)
+    # verify s/w package installations
     check_exists "/opt/gcc-${GCC_VERSION}/"
 fi
-
+ 
 check_exists "/opt/intel/oneapi/mkl/${MKL_VERSION}/"
-
+ 
 # verify hpcdiag installation
 check_exists '/opt/azurehpc/diagnostics/gather_azhpc_vm_diagnostics.sh'
-
+ 
 if [ $CHECK_AOCL -eq 1 ]
 then
     # verify AMD modulefiles
     check_exists "${MODULE_FILES_ROOT}/amd/aocl"
-
+ 
     check_exists "/opt/amd/lib/"
     check_exists "/opt/amd/include/"
 fi
-
+ 
 # verify mpi installations and their modulefiles
 module avail
-
+ 
 # hpcx
 if [ $CHECK_HPCX -eq 1 ]
 then
     check_exists "${MODULE_FILES_ROOT}/mpi/hpcx"
-
+ 
     module load mpi/hpcx
     mpirun -np 2 --map-by ppr:2:node -x UCX_TLS=rc ${HPCX_OMB_PATH}/osu_latency
     check_exit_code "HPC-X" "Failed to run HPC-X"
     module unload mpi/hpcx
 fi
-
+ 
 # impi 2021
 if [ $CHECK_IMPI_2021 -eq 1 ]
 then
     check_exists "${MODULE_FILES_ROOT}/mpi/impi-2021"
-
+ 
     module load mpi/impi-2021
     mpiexec -np 2 -ppn 2 -env FI_PROVIDER=mlx -env I_MPI_SHM=0 ${IMPI2021_PATH}/bin/IMB-MPI1 pingpong
     check_exit_code "Intel MPI 2021" "Failed to run Intel MPI 2021"
     module unload mpi/impi-2021
 fi
-
+ 
 # impi 2018
 if [ $CHECK_IMPI_2018 -eq 1 ]
 then
     check_exists "${MODULE_FILES_ROOT}/mpi/impi"
-
+ 
     module load mpi/impi
     mpiexec -np 2 -ppn 2 -env I_MPI_FABRICS=ofa ${IMPI2018_PATH}/linux/mpi/intel64/bin/IMB-MPI1 pingpong
     check_exit_code "Intel MPI 2018" "Failed to run Intel MPI 2018"
     module unload mpi/impi
 fi
-
+ 
 # mvapich2
 if [ $CHECK_MVAPICH2 -eq 1 ]
 then
     check_exists "${MODULE_FILES_ROOT}/mpi/mvapich2"
-
+ 
     module load mpi/mvapich2
     # Env MV2_FORCE_HCA_TYPE=22 explicitly selects EDR
     mpiexec -np 2 -ppn 2 -env MV2_USE_SHARED_MEM=0  -env MV2_FORCE_HCA_TYPE=22  ${MVAPICH2_PATH}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_latency
     check_exit_code "MVAPICH2" "Failed to run MVAPICH2"
     module unload mpi/mvapich2
 fi
-
+ 
 # mvapich2x
 if [ $CHECK_MVAPICH2X -eq 1 ]
 then
     check_exists "${MODULE_FILES_ROOT}/mpi/mvapich2x"
     check_exists ${MVAPICH2X_PATH}
-
+ 
     module load mpi/mvapich2x
     mpiexec -np 2 -ppn 2 -env MV2_USE_SHARED_MEM=0  ${MVAPICH2X_INSTALLATION_DIRECTORY}/libexec/osu-micro-benchmarks/mpi/pt2pt/osu_latency
     check_exit_code "MVAPICH2X" "Failed to run MVAPICH2X"
     module unload mpi/mvapich2x
 fi
-
+ 
 # Note: no need to run OpenMPI, as it is already covered by HPC-X runs, but make sure it is installed
-if [ $CHECK_OMPI -eq 1 ]
-then
-    check_exists "${MODULE_FILES_ROOT}/mpi/openmpi"
-    check_exists ${OPENMPI_PATH}
-fi
-
+#if [ $CHECK_OMPI -eq 1 ]
+#then
+#    check_exists "${MODULE_FILES_ROOT}/mpi/openmpi"
+#    check_exists ${OPENMPI_PATH}
+#fi
+ 
 # Check Cuda drivers by running Nvidia SMI
 if [ $CHECK_CUDA -eq 1 ]
 then
     nvidia-smi
     check_exit_code "Nvidia SMI - Cuda Drivers" "Failed to run Nvidia SMI - Cuda Drivers"
 fi
-
+ 
 # Check NV_Peer_Memory
 if [ $CHECK_NV_PMEM -eq 1 ]
 then
     lsmod | grep nv
     check_exit_code "NV Peer Memory Module" "Failed to locate Module"
 fi
-
+ 
 # Perform Single Node NCCL Test
 if [ $CHECK_NCCL -eq 1 ]
 then
     module load mpi/hpcx
-
+ 
     if [ "${MOFED_LTS}" = true ]
     then
         mpirun -np 4 \
@@ -434,12 +461,12 @@ then
         -x NCCL_TOPO_FILE=/opt/microsoft/ndv4-topo.xml \
         /opt/nccl-tests/build/all_reduce_perf -b1K -f2 -g1 -e 4G
     fi
-
+ 
     check_exit_code "Single Node NCCL Test" "Failed"
-
+ 
     module unload mpi/hpcx
 fi
-
+ 
 echo "ALL OK!"
-
+ 
 exit 0

@@ -17,7 +17,6 @@ rm -rf /root/*
 cat /dev/null > /etc/machine-id
 
 yum clean all
-du -sh /var/cache/yum/x86_64/7/*
 
 # Zero out unused space to minimize actual disk usage
 for part in $(awk '$3 == "xfs" {print $2}' /proc/mounts)
