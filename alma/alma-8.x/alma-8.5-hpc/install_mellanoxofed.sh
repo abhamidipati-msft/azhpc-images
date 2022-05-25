@@ -14,7 +14,12 @@ KERNEL=${KERNEL[-1]}
 # Uncomment the lines below if you are running this on a VM
 #RELEASE=( $(cat /etc/almalinux-release | awk '{print $3}') )
 #yum -y install https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-devel-${KERNEL}.rpm
-yum install -y kernel-devel-${KERNEL}
+#yum install -y kernel-devel-${KERNEL}
+yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-headers-4.18.0-348.12.2.el8_5.x86_64.rpm
+#yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-rpm-macros-4.18.0-348.12.2.el8_5.x86_64.rpm
+yum install -y --skip-broken https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-modules-extra-4.18.0-348.12.2.el8_5.x86_64.rpm
+yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-devel-4.18.0-348.20.1.el8_5.x86_64.rpm
+
 ./${MOFED_FOLDER}/mlnxofedinstall --kernel $KERNEL --kernel-sources /usr/src/kernels/${KERNEL} --add-kernel-support --skip-repo --skip-unsupported-devices-check --without-fw-update --distro rhel8.5
 
 # Issue: Module mlx5_ib belong to a kernel which is not a part of MLNX
