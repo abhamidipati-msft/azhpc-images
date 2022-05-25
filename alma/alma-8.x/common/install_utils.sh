@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ex
 
+yum install -y python3-dnf-plugin-versionlock
+dnf versionlock add kernel
+
 # Install pre-reqs and development tools
 yum groupinstall -y "Development Tools"
 yum install -y numactl \
@@ -16,9 +19,7 @@ yum install -y numactl \
     tcl \
     tk \
     m4 \
-    texinfo \
     glibc-devel \
-    glibc-static \
     libudev-devel \
     binutils \
     binutils-devel \
