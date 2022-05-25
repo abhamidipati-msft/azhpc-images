@@ -3,6 +3,15 @@ set -ex
 
 yum install -y python3-dnf-plugin-versionlock
 dnf versionlock add kernel
+echo "exclude=kernel" >> /etc/dnf/dnf.conf
+
+#yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-headers-4.18.0-348.12.2.el8_5.x86_64.rpm
+#yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-rpm-macros-4.18.0-348.12.2.el8_5.x86_64.rpm
+#yum install -y --skip-broken https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-modules-extra-4.18.0-348.12.2.el8_5.x86_64.rpm
+yum install -y https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/kernel-rpm-macros-125-1.el8.noarch.rpm
+yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-headers-4.18.0-348.20.1.el8_5.x86_64.rpm
+yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-modules-extra-4.18.0-348.20.1.el8_5.x86_64.rpm
+yum install -y https://repo.almalinux.org/almalinux/8.5/BaseOS/x86_64/os/Packages/kernel-devel-4.18.0-348.20.1.el8_5.x86_64.rpm
 
 # Install pre-reqs and development tools
 yum groupinstall -y "Development Tools"
@@ -24,7 +33,6 @@ yum install -y numactl \
     binutils \
     binutils-devel \
     selinux-policy-devel \
-    kernel-headers \
     nfs-utils \
     fuse-libs \
     libpciaccess \
@@ -39,8 +47,6 @@ yum install -y numactl \
     https://cbs.centos.org/kojifiles/packages/subunit/1.4.0/1.el8/x86_64/subunit-1.4.0-1.el8.x86_64.rpm \
     https://cbs.centos.org/kojifiles/packages/subunit/1.4.0/1.el8/x86_64/subunit-devel-1.4.0-1.el8.x86_64.rpm \
     lsof \
-    kernel-rpm-macros \
-    kernel-modules-extra \
     tcsh \
     gcc-gfortran
     
