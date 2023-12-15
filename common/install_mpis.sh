@@ -113,7 +113,7 @@ spack install
 mvapich2_path=$(spack location -i mvapich2@$mvapich2_version)
 ompi_path=$(spack location -i openmpi@$ompi_version)
 impi_2021_path=$(spack location -i intel-oneapi-mpi@$impi_2021_version)/mpi/$impi_2021_version
-mv $(echo $impi_2021_path)/modulefiles/mpi $(echo $impi_2021_path)/modulefiles/impi
+# mv $(echo $impi_2021_path)/modulefiles/mpi $(echo $impi_2021_path)/modulefiles/impi
 
 # MVAPICH2
 cat << EOF >> $module_files_directory/mvapich2-$mvapich2_version

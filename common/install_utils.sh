@@ -23,7 +23,7 @@ azcopy_version=$(jq -r '.version' <<< $azcopy_metadata)
 azcopy_release=$(jq -r '.release' <<< $azcopy_metadata)
 azcopy_sha256=$(jq -r '.sha256' <<< $azcopy_metadata)
 tarball="azcopy_linux_amd64_$azcopy_version.tar.gz"
-azcopy_download_url="https://azcopyvnext.azureedge.net/$azcopy_release/$tarball"
+azcopy_download_url="https://azcopyvnext.azureedge.net/releases/$azcopy_release/$tarball"
 azcopy_folder=$(basename $azcopy_download_url .tgz)
 
 $COMMON_DIR/download_and_verify.sh $azcopy_download_url $azcopy_sha256
